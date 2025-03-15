@@ -1,5 +1,5 @@
 {
-    "name": "midnight/mercadopago",
+    "name": "midnightgb/mercadopago",
     "description": "Mercado Pago Payment Gateway for Bagisto",
     "version": "1.0.0",
     "type": "library",
