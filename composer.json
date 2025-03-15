@@ -1,7 +1,7 @@
 {
     "name": "midnightgb/mercadopago",
     "description": "Mercado Pago Payment Gateway for Bagisto",
-    "version": "1.0.1",
+    "version": "v1.0.1",
     "type": "library",
     "license": "MIT",
     "authors": [
