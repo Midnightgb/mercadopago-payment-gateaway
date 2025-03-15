@@ -1,0 +1,51 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & editors
+/.idea
+/.vscode
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# PHP & Composer
+vendor/
+composer.lock
+composer.phar
+.phpunit.result.cache
+.php_cs.cache
+.php-cs-fixer.cache
+
+# Laravel specific
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+
+# Node modules
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+
+# Build files
+/public/css
+/public/js
+/public/mix-manifest.json
+
+# Testing
+/coverage
+.phpunit.result.cache
+
+# Package specific
+/build

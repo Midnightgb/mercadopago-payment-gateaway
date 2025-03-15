@@ -1,0 +1,30 @@
+{
+    "name": "midnight/mercadopago",
+    "description": "Mercado Pago Payment Gateway for Bagisto",
+    "version": "1.0.0",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Julian Vasquez",
+            "email": "julian@javm.tech"
+        }
+    ],
+    "require": {
+        "bagisto/bagisto": "^2.0",
+        "mercadopago/dx-php": "^2.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Midnight\\MercadoPago\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Midnight\\MercadoPago\\Providers\\MercadoPagoServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}
