@@ -1,84 +1,86 @@
 # Mercado Pago Payment Gateway for Bagisto
 
-Este paquete proporciona integración con la pasarela de pago Mercado Pago para la plataforma de comercio electrónico Bagisto.
+A payment gateway integration for Mercado Pago on the Bagisto e-commerce platform.
 
-## Características
+## Features
 
-- Integración perfecta con el proceso de pago de Bagisto
-- Soporte para métodos de pago de Mercado Pago
-- Configurable desde el panel de administración de Bagisto
-- Soporte para modo Sandbox (pruebas)
-- Soporte multiidioma (Español e Inglés)
+- Seamless integration with Bagisto checkout process
+- Support for Mercado Pago payment methods
+- Configurable from Bagisto admin panel
+- Sandbox mode support for testing
 
-## Requisitos
+
+## Requirements
 
 - Bagisto ^2.0
 - PHP ^8.1
 - Composer
-- Cuenta de Mercado Pago
+- Mercado Pago account
 
-## Instalación
+## Installation
 
-### Opción 1: Instalación vía Composer (Recomendada)
+### Option 1: Installation via Composer (Recommended)
 
 ```bash
-composer require midnight/mercadopago
+composer require midnightgb/mercadopago
 ```
 
-### Opción 2: Instalación Manual
+### Option 2: Manual Installation
 
-1. Descarga este repositorio
-2. Descomprime el archivo y copia la carpeta `mercadopago-payment-gateaway` en el directorio `packages/` de tu instalación de Bagisto
-3. Añade la siguiente línea al archivo `composer.json` en la sección `autoload.psr-4`:
+1. Download this repository
+2. Extract the file and copy the `mercadopago-payment-gateaway` folder to the `packages/` directory of your Bagisto installation
+3. Add the following line to the `composer.json` file in the `autoload.psr-4` section:
    ```json
    "Midnight\\MercadoPago\\": "packages/mercadopago-payment-gateaway/src/"
    ```
-4. Añade el siguiente proveedor de servicios al archivo `config/app.php`:
+4. Add the following service provider to the `config/app.php` file:
    ```php
    Midnight\MercadoPago\Providers\MercadoPagoServiceProvider::class
    ```
-5. Ejecuta:
+5. Run:
    ```bash
    composer dump-autoload
    ```
 
-## Configuración
+## Configuration
 
-1. Obtén tus credenciales de Mercado Pago:
-   - Inicia sesión en tu cuenta de [Mercado Pago Developers](https://developers.mercadopago.com/)
-   - Ve a la sección de Credenciales
-   - Copia tu Access Token y Public Key
+1. Get your Mercado Pago credentials:
+   - Log in to your [Mercado Pago Developers](https://developers.mercadopago.com/) account
+   - Go to the Credentials section
+   - Copy your Access Token and Public Key
 
-2. Configura las credenciales en tu archivo `.env`:
+2. Configure the credentials in your `.env` file:
    ```
-   MERCADOPAGO_ACCESS_TOKEN=TU_ACCESS_TOKEN
-   MERCADOPAGO_PUBLIC_KEY=TU_PUBLIC_KEY
+   MERCADOPAGO_ACCESS_TOKEN=YOUR_ACCESS_TOKEN
+   MERCADOPAGO_PUBLIC_KEY=YOUR_PUBLIC_KEY
    ```
 
-3. Configura el método de pago en el panel de administración de Bagisto:
-   - Ve a **Configuración > Ventas > Métodos de Pago**
-   - Busca "Mercado Pago" en la lista
-   - Activa el método de pago
-   - Configura el título y la descripción
-   - Habilita el modo Sandbox para pruebas si es necesario
-   - Guarda la configuración
+3. Configure the payment method in the Bagisto admin panel:
+   - Go to **Settings > Sales > Payment Methods**
+   - Find "Mercado Pago" in the list
+   - Enable the payment method
+   - Configure the title and description
+   - Enable Sandbox mode for testing if needed
+   - Save the configuration
 
-## Uso
+## Usage
 
-Una vez configurado, Mercado Pago aparecerá como una opción de pago durante el proceso de compra en tu tienda Bagisto.
+Once configured, Mercado Pago will appear as a payment option during the checkout process in your Bagisto store.
 
-## Pruebas
+## Testing
 
-Para realizar pruebas en modo Sandbox, puedes usar las [tarjetas de prueba proporcionadas por Mercado Pago](https://www.mercadopago.com.ar/developers/es/docs/checkout-api/additional-content/test-cards).
+For testing in Sandbox mode, you can use the [test cards provided by Mercado Pago](https://www.mercadopago.com.co/developers).
 
-## Solución de problemas
+## Troubleshooting
 
-Si encuentras algún problema, verifica los logs de Laravel en `storage/logs/laravel.log`.
+If you encounter any issues, check the Laravel logs in `storage/logs/laravel.log`.
 
-## Contribuir
+## Contributing
 
-Las contribuciones son bienvenidas. Por favor, envía un Pull Request o abre un Issue para discutir los cambios propuestos.
+Contributions are welcome. Please submit a Pull Request or open an Issue to discuss proposed changes.
 
-## Licencia
+## License
 
-Este paquete está licenciado bajo la [Licencia MIT](LICENSE). 
+This package is licensed under the [MIT License](LICENSE).
+
+---
