@@ -21,6 +21,7 @@ class MercadoPagoServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__ . '/../Resources/views' => resource_path('views/vendor/mercadopago'),
+            __DIR__ . '/../Resources/lang' => resource_path('lang/vendor/mercadopago'),
         ]);
     }
 

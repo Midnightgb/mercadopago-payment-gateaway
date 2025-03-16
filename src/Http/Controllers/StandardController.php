@@ -37,7 +37,7 @@ class StandardController extends Controller
      */
     public function cancel()
     {
-        session()->flash('error', trans('shop::app.checkout.cart.payment-cancelled'));
+        session()->flash('error', trans('mercadopago::app.checkout.cart.payment-cancelled'));
 
         return redirect()->route('shop.checkout.cart.index');
     }
@@ -49,7 +49,7 @@ class StandardController extends Controller
      */
     public function pending()
     {
-        session()->flash('warning', trans('shop::app.checkout.cart.payment-pending'));
+        session()->flash('warning', trans('mercadopago::app.checkout.cart.payment-pending'));
 
         return redirect()->route('shop.checkout.cart.index');
     }

@@ -14,7 +14,7 @@ try {
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Redirecting to Mercado Pago...</title>
+    <title>{{ __('mercadopago::app.mercadopago-redirect.title') }}</title>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
         body {
@@ -61,12 +61,12 @@ try {
     <?php if (isset($formFields['error']) && $formFields['error']): ?>
         <div class="error">
             <p><?php echo $formFields['message']; ?></p>
-            <p>There was an error processing your payment. Please try again.</p>
-            <a href="<?php echo route('shop.checkout.cart.index'); ?>" class="btn">Return to Cart</a>
+            <p>{{ __('mercadopago::app.mercadopago-redirect.error') }}</p>
+            <a href="<?php echo route('shop.checkout.cart.index'); ?>" class="btn">{{ __('mercadopago::app.mercadopago-redirect.return-to-cart') }}</a>
         </div>
     <?php else: ?>
         <div class="loader"></div>
-        <p>You will be redirected to Mercado Pago in a few seconds...</p>
+        <p>{{ __('mercadopago::app.mercadopago-redirect.description') }}</p>
 
         <?php if (isset($formFields['init_point']) && $formFields['init_point']): ?>
             <script>
@@ -92,7 +92,7 @@ try {
                             autoOpen: true,
                             render: {
                                 container: '#mercadopago-button',
-                                label: 'Pay with Mercado Pago'
+                                label: '{{ __('mercadopago::app.mercadopago-redirect.pay-with-mercadopago') }}'
                             }
                         });
                     } catch (error) {
