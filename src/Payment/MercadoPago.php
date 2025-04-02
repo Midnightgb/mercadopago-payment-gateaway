@@ -74,12 +74,22 @@ abstract class MercadoPago extends Payment
 
     /**
      * Format a currency value according to mercadopago's api constraints
+     * Some currencies like COP don't use cents, so no need to multiply by 100
+     * Ensure value is positive and integer as MercadoPago requires
      *
      * @param  float|int  $number
      */
-    public function formatCurrencyValue($number): float
+    public function formatCurrencyValue($number): int
     {
-        return round((float) $number, 2);
+        // This works correctly for currencies without cents like COP
+        $value = (int) round(abs((float) $number));
+
+        // Ensure we return at least 1 if the value is very small but not zero
+        if ($number != 0 && $value == 0) {
+            return 1;
+        }
+
+        return $value;
     }
 
     /**
