@@ -65,16 +65,21 @@ class Standard extends MercadoPago
                 return null;
             }
 
-            // Prepare items array
+            // Prepare array of items with individual products
             $items = [];
+            $subtotal = 0;
+
             foreach ($this->getCartItems() as $item) {
+                $itemPrice = $this->formatCurrencyValue($item->price);
+                $subtotal += $itemPrice * $item->quantity;
+
                 $items[] = [
                     'id' => (string) $item->id,
                     'title' => $item->name,
                     'description' => substr($item->name, 0, 127),
                     'quantity' => $item->quantity,
                     'currency_id' => $cart->cart_currency_code,
-                    'unit_price' => $this->formatCurrencyValue($item->price)
+                    'unit_price' => $itemPrice
                 ];
             }
 
@@ -83,15 +88,39 @@ class Standard extends MercadoPago
                 return null;
             }
 
-            // Add shipping as an item if applicable
+            // Add shipping if applicable
             if ($cart->selected_shipping_rate) {
+                $shippingPrice = $this->formatCurrencyValue($cart->selected_shipping_rate->price);
+                $subtotal += $shippingPrice;
+
                 $items[] = [
                     'id' => 'shipping',
-                    'title' => 'Shipping: ' . $cart->selected_shipping_rate->carrier_title,
-                    'description' => 'Shipping Cost',
+                    'title' => trans('mercadopago::app.payment.items.shipping', ['carrier' => $cart->selected_shipping_rate->carrier_title]),
+                    'description' => trans('mercadopago::app.payment.items.shipping-description'),
                     'quantity' => 1,
                     'currency_id' => $cart->cart_currency_code,
-                    'unit_price' => $this->formatCurrencyValue($cart->selected_shipping_rate->price)
+                    'unit_price' => $shippingPrice
+                ];
+            }
+
+            // Calculate difference between subtotal and grand_total
+            // This will include coupon discounts and taxes
+            $grandTotal = $this->formatCurrencyValue($cart->grand_total);
+            $difference = $this->formatCurrencyValue($subtotal - $grandTotal);
+
+            // If there is a difference (discount or additional tax), add it as an item
+            if ($difference != 0) {
+                $items[] = [
+                    'id' => 'adjustment',
+                    'title' => $difference > 0
+                        ? trans('mercadopago::app.payment.items.discount')
+                        : trans('mercadopago::app.payment.items.tax'),
+                    'description' => $difference > 0
+                        ? trans('mercadopago::app.payment.items.discount-description')
+                        : trans('mercadopago::app.payment.items.tax-description'),
+                    'quantity' => 1,
+                    'currency_id' => $cart->cart_currency_code,
+                    'unit_price' => $difference > 0 ? -$difference : abs($difference)
                 ];
             }
 
