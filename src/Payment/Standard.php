@@ -77,7 +77,7 @@ class Standard extends MercadoPago
                     'id' => (string) $item->id,
                     'title' => $item->name,
                     'description' => substr($item->name, 0, 127),
-                    'quantity' => $item->quantity,
+                    'quantity' => (int) $item->quantity,
                     'currency_id' => $cart->cart_currency_code,
                     'unit_price' => $itemPrice
                 ];
@@ -148,7 +148,12 @@ class Standard extends MercadoPago
                     'pending' => route('mercadopago.standard.pending')
                 ],
                 'auto_return' => 'approved',
-                'external_reference' => (string) $cart->id
+                'external_reference' => (string) $cart->id,
+                'payment_methods' => [
+                    'excluded_payment_methods' => [],
+                    'excluded_payment_types' => [],
+                    'installments' => 12
+                ]
                 // Removed notification_url as it's causing issues with local development
             ];
 
