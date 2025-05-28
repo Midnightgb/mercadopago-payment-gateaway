@@ -73,13 +73,22 @@ class Standard extends MercadoPago
                 $itemPrice = $this->formatCurrencyValue($item->price);
                 $subtotal += $itemPrice * $item->quantity;
 
+                // Get category ID for better approval rates
+                $categoryId = 'others'; // Default category
+                if ($item->product && $item->product->categories->isNotEmpty()) {
+                    // Use the first category name as category_id
+                    $categoryName = $item->product->categories->first()->name;
+                    $categoryId = $this->mapCategoryToMercadoPago($categoryName);
+                }
+
                 $items[] = [
                     'id' => (string) $item->id,
                     'title' => $item->name,
                     'description' => substr($item->name, 0, 127),
                     'quantity' => (int) $item->quantity,
                     'currency_id' => $cart->cart_currency_code,
-                    'unit_price' => $itemPrice
+                    'unit_price' => $itemPrice,
+                    'category_id' => $categoryId
                 ];
             }
 
@@ -153,12 +162,12 @@ class Standard extends MercadoPago
                     'excluded_payment_methods' => [],
                     'excluded_payment_types' => [],
                     'installments' => 12
-                ]
-                // Removed notification_url as it's causing issues with local development
+                ],
+                'notification_url' => route('mercadopago.standard.ipn')
             ];
 
             // Log the request for debugging
-            Log::info('MercadoPago Preference Request: ' . json_encode($request));
+            //Log::info('MercadoPago Preference Request: ' . json_encode($request));
 
             // Instantiate a new Preference Client
             $client = new PreferenceClient();
@@ -167,7 +176,7 @@ class Standard extends MercadoPago
             $preference = $client->create($request);
 
             // Log the response for debugging
-            Log::info('MercadoPago Preference Response: ' . json_encode($preference));
+            //Log::info('MercadoPago Preference Response: ' . json_encode($preference));
 
             return $preference;
         } catch (MPApiException $e) {
@@ -185,6 +194,99 @@ class Standard extends MercadoPago
             Log::error('MercadoPago Error Trace: ' . $e->getTraceAsString());
             return null;
         }
+    }
+
+    /**
+     * Map product category to MercadoPago category ID
+     *
+     * @param string $categoryName
+     * @return string
+     */
+    private function mapCategoryToMercadoPago($categoryName)
+    {
+        $categoryName = strtolower(trim($categoryName));
+
+        // Map common categories to MercadoPago category IDs
+        $categoryMapping = [
+            // Electronics & Technology
+            'electronics' => 'electronics',
+            'electrónicos' => 'electronics',
+            'tecnología' => 'electronics',
+            'technology' => 'electronics',
+            'computadoras' => 'electronics',
+            'computers' => 'electronics',
+            'celulares' => 'electronics',
+            'phones' => 'electronics',
+            'móviles' => 'electronics',
+
+            // Fashion & Clothing
+            'ropa' => 'clothing',
+            'clothing' => 'clothing',
+            'fashion' => 'clothing',
+            'moda' => 'clothing',
+            'zapatos' => 'clothing',
+            'shoes' => 'clothing',
+            'accessories' => 'clothing',
+            'accesorios' => 'clothing',
+
+            // Home & Garden
+            'hogar' => 'home',
+            'home' => 'home',
+            'casa' => 'home',
+            'jardín' => 'home',
+            'garden' => 'home',
+            'furniture' => 'home',
+            'muebles' => 'home',
+            'decoración' => 'home',
+            'decoration' => 'home',
+
+            // Sports & Recreation
+            'deportes' => 'sports',
+            'sports' => 'sports',
+            'fitness' => 'sports',
+            'recreation' => 'sports',
+            'recreación' => 'sports',
+
+            // Health & Beauty
+            'salud' => 'health',
+            'health' => 'health',
+            'belleza' => 'health',
+            'beauty' => 'health',
+            'cosmetics' => 'health',
+            'cosméticos' => 'health',
+
+            // Books & Education
+            'libros' => 'books',
+            'books' => 'books',
+            'educación' => 'books',
+            'education' => 'books',
+
+            // Food & Beverages
+            'comida' => 'food',
+            'food' => 'food',
+            'bebidas' => 'food',
+            'beverages' => 'food',
+            'alimentos' => 'food',
+
+            // Automotive
+            'automotriz' => 'automotive',
+            'automotive' => 'automotive',
+            'autos' => 'automotive',
+            'cars' => 'automotive',
+            'vehiculos' => 'automotive',
+            'vehicles' => 'automotive',
+
+            // Music & Entertainment
+            'música' => 'music',
+            'music' => 'music',
+            'entertainment' => 'music',
+            'entretenimiento' => 'music',
+            'games' => 'music',
+            'juegos' => 'music',
+        ];
+
+        // Return mapped category or default
+        return $categoryMapping[$categoryName] ?? 'others';
     }
 
     /**

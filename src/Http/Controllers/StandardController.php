@@ -81,8 +81,13 @@ class StandardController extends Controller
      */
     public function ipn(Request $request)
     {
-        $this->ipnHelper->processIpn($request->all());
-
-        return response()->json(['status' => 'OK'], 200);
+        try {
+            $this->ipnHelper->processIpn($request->all());
+            return response()->json(['status' => 'OK'], 200);
+        } catch (\Exception $e) {
+            // Log the error but always return 200 to prevent MercadoPago retries
+            \Log::error('MercadoPago IPN Controller Error: ' . $e->getMessage());
+            return response()->json(['status' => 'ERROR', 'message' => 'Internal error'], 200);
+        }
     }
 }
