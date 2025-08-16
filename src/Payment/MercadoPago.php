@@ -74,22 +74,43 @@ abstract class MercadoPago extends Payment
 
     /**
      * Format a currency value according to mercadopago's api constraints
-     * Some currencies like COP don't use cents, so no need to multiply by 100
-     * Ensure value is positive and integer as MercadoPago requires
+     * - Preserve cents for currencies that support them
+     * - Round to whole numbers only for zero-decimal currencies (e.g., JPY, CLP)
+     * - Preserve the sign (needed for discounts/adjustments)
      *
      * @param  float|int  $number
      */
-    public function formatCurrencyValue($number): int
+    public function formatCurrencyValue($number)
     {
-        // This works correctly for currencies without cents like COP
-        $value = (int) round(abs((float) $number));
+        $cart = method_exists($this, 'getCart') ? $this->getCart() : null;
+        $currencyCode = $cart && isset($cart->cart_currency_code)
+            ? strtoupper($cart->cart_currency_code)
+            : 'USD';
 
-        // Ensure we return at least 1 if the value is very small but not zero
-        if ($number != 0 && $value == 0) {
-            return 1;
+        $isZeroDecimal = in_array($currencyCode, $this->getZeroDecimalCurrencies(), true);
+
+        // Round to the appropriate precision and preserve sign
+        $rounded = round((float) $number, $isZeroDecimal ? 0 : 2);
+
+        // Normalize negative zero values
+        if ($rounded == 0) {
+            return $isZeroDecimal ? 0 : 0.0;
         }
 
-        return $value;
+        return $isZeroDecimal ? (int) $rounded : (float) $rounded;
+    }
+
+    /**
+     * List of ISO currency codes that do not use decimal fractions
+     *
+     * @return array<string>
+     */
+    protected function getZeroDecimalCurrencies(): array
+    {
+        return [
+            'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG',
+            'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'
+        ];
     }
 
     /**
