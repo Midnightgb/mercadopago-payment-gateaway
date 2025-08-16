@@ -18,7 +18,6 @@ abstract class MercadoPago extends Payment
             ? 'https://sandbox.mercadopago.com'
             : 'https://www.mercadopago.com';
     }
-
     /**
      * Add order item fields
      *
