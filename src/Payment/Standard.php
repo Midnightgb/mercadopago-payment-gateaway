@@ -157,7 +157,8 @@ class Standard extends MercadoPago
                     'pending' => route('mercadopago.standard.pending')
                 ],
                 'auto_return' => 'approved',
-                'external_reference' => (string) $cart->id,
+                // External reference debe apuntar a la orden (si ya fue creada) para que el IPN la localice
+                'external_reference' => (string) (session()->get('order_id') ?? $cart->id),
                 'payment_methods' => [
                     'excluded_payment_methods' => [],
                     'excluded_payment_types' => [],

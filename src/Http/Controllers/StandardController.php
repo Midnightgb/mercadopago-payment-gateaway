@@ -27,6 +27,19 @@ class StandardController extends Controller
      */
     public function redirect()
     {
+        // Crear la orden antes de salir del sitio (evita pérdida cuando el usuario no vuelve, ej. PIX en desktop)
+        try {
+            $cart = Cart::getCart();
+
+            if ($cart && ! session()->has('order_id')) {
+                $data = (new OrderResource($cart))->jsonSerialize();
+                $order = $this->orderRepository->create($data);
+                session()->put('order_id', $order->id);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('MercadoPago redirect order creation failed: ' . $e->getMessage());
+        }
+
         return view('mercadopago::standard-redirect');
     }
 
@@ -61,15 +74,32 @@ class StandardController extends Controller
      */
     public function success()
     {
-        $cart = Cart::getCart();
+        // Si ya se creó la orden en redirect(), solo reutilizarla
+        $orderId = session()->get('order_id');
+        if ($orderId) {
+            $order = $this->orderRepository->find($orderId);
+        }
 
-        $data = (new OrderResource($cart))->jsonSerialize();
+        // Fallback legacy: si no existe (flujo antiguo o error), crearla ahora
+        if (empty($order)) {
+            try {
+                $cart = Cart::getCart();
+                if ($cart) {
+                    $data = (new OrderResource($cart))->jsonSerialize();
+                    $order = $this->orderRepository->create($data);
+                    session()->put('order_id', $order->id);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('MercadoPago success fallback order creation failed: ' . $e->getMessage());
+            }
+        }
 
-        $order = $this->orderRepository->create($data);
+        // Desactivar el carrito si existe
+        try { Cart::deActivateCart(); } catch (\Throwable $e) { /* ignore */ }
 
-        Cart::deActivateCart();
-
-        session()->flash('order_id', $order->id);
+        if (isset($order) && $order) {
+            session()->flash('order_id', $order->id);
+        }
 
         return redirect()->route('shop.checkout.onepage.success');
     }
