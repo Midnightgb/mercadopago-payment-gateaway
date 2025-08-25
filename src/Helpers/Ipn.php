@@ -108,6 +108,18 @@ class Ipn
                 // Try to find the order, but don't fail if not found (could be test data)
                 $order = $this->orderRepository->find($orderId);
 
+                if (! $order) {
+                    // Fallback: si la referencia era el id del carrito y la orden se creó luego con otro ID (incremental)
+                    // intentar localizar por campo cart_id si existe.
+                    try {
+                        if (method_exists($this->orderRepository->model, 'where')) {
+                            $order = $this->orderRepository->model::where('cart_id', $orderId)->first();
+                        }
+                    } catch (\Throwable $e) {
+                        // Ignorar
+                    }
+                }
+
                 if ($order) {
                     Log::info("MercadoPago IPN: Processing payment {$paymentId} for order {$orderId} with status {$payment->status}");
 
