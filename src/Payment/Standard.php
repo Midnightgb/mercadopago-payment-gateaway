@@ -147,6 +147,12 @@ class Standard extends MercadoPago
                 'email' => $billingAddress->email
             ];
 
+            // Get the order ID from session - this should be set by the redirect method
+            $orderId = session()->get('order_id');
+            
+            // Use order ID if available, fallback to cart ID
+            $externalReference = $orderId ? (string) $orderId : (string) $cart->id;
+
             // Create the preference request - simplified to match documentation
             $request = [
                 'items' => $items,
@@ -157,27 +163,27 @@ class Standard extends MercadoPago
                     'pending' => route('mercadopago.standard.pending')
                 ],
                 'auto_return' => 'approved',
-                // External reference debe apuntar a la orden (si ya fue creada) para que el IPN la localice
-                'external_reference' => (string) (session()->get('order_id') ?? $cart->id),
+                // Use the order ID so IPN can properly locate the order
+                'external_reference' => $externalReference,
                 'payment_methods' => [
                     'excluded_payment_methods' => [],
                     'excluded_payment_types' => [],
                     'installments' => 12
                 ],
-                'notification_url' => route('mercadopago.standard.ipn')
+                'notification_url' => route('mercadopago.standard.ipn'),
+                // Add expires to prevent old preferences from being reused
+                'expires' => true,
+                'expiration_date_from' => now()->toISOString(),
+                'expiration_date_to' => now()->addHours(24)->toISOString()
             ];
 
-            // Log the request for debugging
-            //Log::info('MercadoPago Preference Request: ' . json_encode($request));
+            Log::info("MercadoPago: Creating preference with external_reference: {$externalReference}");
 
             // Instantiate a new Preference Client
             $client = new PreferenceClient();
 
             // Create the preference
             $preference = $client->create($request);
-
-            // Log the response for debugging
-            //Log::info('MercadoPago Preference Response: ' . json_encode($preference));
 
             return $preference;
         } catch (MPApiException $e) {

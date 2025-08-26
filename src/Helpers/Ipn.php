@@ -29,8 +29,6 @@ class Ipn
     public function processIpn($request)
     {
         try {
-            //Log::info('MercadoPago IPN received: ' . json_encode($request));
-
             // Handle different webhook formats
             $paymentId = null;
             $notificationType = null;
@@ -53,13 +51,11 @@ class Ipn
 
             // Validate we have the required data
             if (!$notificationType || !$paymentId) {
-                //Log::error('MercadoPago IPN Error: Could not extract payment ID or type from request', $request);
                 return;
             }
 
             // Only process payment notifications
             if ($notificationType !== 'payment') {
-                //Log::info("MercadoPago IPN: Ignoring non-payment notification type: {$notificationType}");
                 return;
             }
 
@@ -71,7 +67,6 @@ class Ipn
 
             // Check if this looks like test data
             if (in_array($paymentId, ['123456', '123', 'test', 'sample'])) {
-                //Log::info("MercadoPago IPN: Ignoring test payment ID: {$paymentId}");
                 return;
             }
 
@@ -105,28 +100,30 @@ class Ipn
             if ($payment && isset($payment->external_reference)) {
                 $orderId = $payment->external_reference;
 
-                // Try to find the order, but don't fail if not found (could be test data)
+                // Try to find the order
                 $order = $this->orderRepository->find($orderId);
 
-                if (! $order) {
-                    // Fallback: si la referencia era el id del carrito y la orden se creó luego con otro ID (incremental)
-                    // intentar localizar por campo cart_id si existe.
+                if (!$order) {
+                    // Fallback: try to find by cart_id if the order was created with cart ID as external reference
                     try {
                         if (method_exists($this->orderRepository->model, 'where')) {
                             $order = $this->orderRepository->model::where('cart_id', $orderId)->first();
                         }
                     } catch (\Throwable $e) {
-                        // Ignorar
+                        // Ignore fallback errors
                     }
                 }
 
                 if ($order) {
                     Log::info("MercadoPago IPN: Processing payment {$paymentId} for order {$orderId} with status {$payment->status}");
 
+                    // Get current order status to avoid unnecessary changes
+                    $currentStatus = $order->status;
+
                     // Process payment status
                     switch ($payment->status) {
                         case 'approved':
-                            if ($order->status === 'pending') {
+                            if ($currentStatus === 'pending') {
                                 $this->createInvoice($order);
                                 Log::info("MercadoPago IPN: Invoice created for order {$orderId}");
                             }
@@ -134,16 +131,16 @@ class Ipn
 
                         case 'pending':
                         case 'in_process':
-                            // Order remains in pending state
+                        case 'in_mediation':
+                            // Order remains in pending state - no action needed
                             break;
 
                         case 'rejected':
                         case 'cancelled':
                         case 'refunded':
                         case 'charged_back':
-                            if ($order->status !== 'canceled') {
-                                $order->status = 'canceled';
-                                $order->save();
+                            if (!in_array($currentStatus, ['canceled', 'cancelled'])) {
+                                $this->cancelOrderAndRestoreInventory($order, $payment->status);
                                 Log::info("MercadoPago IPN: Order {$orderId} cancelled due to payment status: {$payment->status}");
                             }
                             break;
@@ -167,20 +164,67 @@ class Ipn
     /**
      * Create invoice.
      *
-     * @param  \Midnight\Sales\Contracts\Order  $order
+     * @param  \Webkul\Sales\Contracts\Order  $order
      * @return void
      */
     protected function createInvoice($order)
     {
         if ($order->payment->method === 'mercadopago_standard') {
-            $this->invoiceRepository->create($this->prepareInvoiceData($order));
+            try {
+                $this->invoiceRepository->create($this->prepareInvoiceData($order));
+                
+                // Update order status to processing after invoice creation
+                $order->status = 'processing';
+                $order->save();
+                
+                Log::info("MercadoPago IPN: Order {$order->id} status updated to processing");
+            } catch (\Exception $e) {
+                Log::error("MercadoPago IPN: Failed to create invoice for order {$order->id}: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Cancel order and restore inventory.
+     *
+     * @param  \Webkul\Sales\Contracts\Order  $order
+     * @param  string  $paymentStatus
+     * @return void
+     */
+    protected function cancelOrderAndRestoreInventory($order, $paymentStatus)
+    {
+        try {
+            // Set order status to canceled
+            $order->status = 'canceled';
+            $order->save();
+
+            // Restore inventory for each item
+            foreach ($order->items as $item) {
+                if ($item->product) {
+                    // Check if the product has inventory sources
+                    $inventorySource = $item->product->inventory_source_products()->first();
+                    
+                    if ($inventorySource) {
+                        // Restore the quantity
+                        $inventorySource->increment('qty', $item->qty_ordered);
+                        
+                        Log::info("MercadoPago IPN: Restored {$item->qty_ordered} units of product {$item->product->id} for cancelled order {$order->id}");
+                    } else {
+                        Log::warning("MercadoPago IPN: No inventory source found for product {$item->product->id} in order {$order->id}");
+                    }
+                }
+            }
+            
+            Log::info("MercadoPago IPN: Successfully cancelled order {$order->id} and restored inventory due to payment status: {$paymentStatus}");
+        } catch (\Exception $e) {
+            Log::error("MercadoPago IPN: Error cancelling order {$order->id} and restoring inventory: " . $e->getMessage());
         }
     }
 
     /**
      * Prepare invoice data.
      *
-     * @param  \Midnight\Sales\Contracts\Order  $order
+     * @param  \Webkul\Sales\Contracts\Order  $order
      * @return array
      */
     protected function prepareInvoiceData($order)
