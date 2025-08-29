@@ -139,6 +139,7 @@ class Ipn
                         case 'cancelled':
                         case 'refunded':
                         case 'charged_back':
+                        case 'expired':
                             if (!in_array($currentStatus, ['canceled', 'cancelled'])) {
                                 $this->cancelOrderAndRestoreInventory($order, $payment->status);
                                 Log::info("MercadoPago IPN: Order {$orderId} cancelled due to payment status: {$payment->status}");
