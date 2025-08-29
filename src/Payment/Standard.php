@@ -174,7 +174,7 @@ class Standard extends MercadoPago
                 // Add expires to prevent old preferences from being reused
                 'expires' => true,
                 'expiration_date_from' => now()->toISOString(),
-                'expiration_date_to' => now()->addHours(24)->toISOString()
+                'expiration_date_to' => now()->addHour()->toISOString()
             ];
 
             Log::info("MercadoPago: Creating preference with external_reference: {$externalReference}");
